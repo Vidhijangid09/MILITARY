@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
+data/KDDTrain+.txt
+data/threat_model.joblib
+frontend/static/js/*.map
+node_modules/

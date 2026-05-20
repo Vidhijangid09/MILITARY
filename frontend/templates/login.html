@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure Military Communication - Login</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <main class="auth-panel">
+        <h1>Military Communication System</h1>
+        <form id="login-form">
+            <label>Username</label>
+            <input type="text" name="username" required />
+            <label>Password</label>
+            <input type="password" name="password" required />
+            <button type="submit">Login</button>
+        </form>
+        <p>New operator? <a href="/register">Register here</a></p>
+        <div id="login-feedback" class="feedback"></div>
+    </main>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = { username: form.username.value, password: form.password.value };
+            const response = await fetch('/api/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            const feedback = document.getElementById('login-feedback');
+            if (result.success) {
+                window.location.href = '/dashboard';
+            } else {
+                feedback.textContent = result.message;
+            }
+        });
+    </script>
+</body>
+</html>

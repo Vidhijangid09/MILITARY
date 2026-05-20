@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Military Communication</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <main class="auth-panel">
+        <h1>Create Secure Account</h1>
+        <form id="register-form">
+            <label>Username</label>
+            <input type="text" name="username" required />
+            <label>Email</label>
+            <input type="email" name="email" required />
+            <label>Password</label>
+            <input type="password" name="password" required />
+            <button type="submit">Register</button>
+        </form>
+        <p>Already have an account? <a href="/">Login now</a></p>
+        <div id="register-feedback" class="feedback"></div>
+    </main>
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = { username: form.username.value, email: form.email.value, password: form.password.value };
+            const response = await fetch('/api/register', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            const feedback = document.getElementById('register-feedback');
+            if (result.success) {
+                feedback.textContent = 'Registration complete. Redirecting...';
+                setTimeout(() => window.location.href = '/', 1500);
+            } else {
+                feedback.textContent = result.message;
+            }
+        });
+    </script>
+</body>
+</html>

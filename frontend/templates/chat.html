@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Secure Command Center</h2>
+            <nav>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/chat">Secure Chat</a>
+                <a href="/admin">Admin Panel</a>
+                <a href="/api/logout">Logout</a>
+            </nav>
+        </aside>
+        <section class="content">
+            <header>
+                <h1>Encrypted Messaging</h1>
+                <p>Sender to receiver secure transmission with AES protection.</p>
+            </header>
+            <div class="chat-panel">
+                <form id="message-form">
+                    <label>Recipient Username</label>
+                    <input type="text" id="recipient" list="recipient-list" placeholder="Type or select recipient" required />
+                    <datalist id="recipient-list"></datalist>
+                    <label>Subject</label>
+                    <input type="text" id="subject" placeholder="Mission code, orders, intel summary" />
+                    <label>Priority</label>
+                    <select id="priority">
+                        <option value="normal" selected>Normal</option>
+                        <option value="low">Low</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                    <label>Message</label>
+                    <textarea id="message-text" rows="4" required></textarea>
+                    <button type="submit">Send Secure Message</button>
+                </form>
+                <div id="message-feedback" class="feedback"></div>
+                <div id="message-preview" class="feedback"></div>
+                <div class="message-history">
+                    <h3>Conversation History</h3>
+                    <div id="history"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script>
+        async function loadRecipients() {
+            const response = await fetch('/api/users');
+            const data = await response.json();
+            const recipientInput = document.getElementById('recipient');
+            const recipientList = document.getElementById('recipient-list');
+            recipientList.innerHTML = '';
+            recipientInput.value = '';
+            recipientInput.placeholder = 'Type or select recipient';
+            if (!data.success || !data.users.length) {
+                recipientInput.placeholder = 'No recipients available';
+                return;
+            }
+            data.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                recipientList.appendChild(option);
+            });
+        }
+
+        async function fetchHistory(recipient) {
+            const response = await fetch(`/api/messages/${recipient}`);
+            const data = await response.json();
+            const history = document.getElementById('history');
+            history.innerHTML = '';
+            if (!data.success) {
+                history.textContent = 'Unable to load conversation.';
+                return;
+            }
+            data.messages.forEach(msg => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                card.innerHTML = `
+                    <strong>${msg.sender} → ${msg.recipient}</strong>
+                    <p>${msg.subject ? `${msg.subject} · ` : ''}<span class="tag">${msg.priority.toUpperCase()}</span></p>
+                    <p>${msg.cipher_text.slice(0, 40)}... <span class="tag">${msg.algorithm}</span></p>
+                    <small>${new Date(msg.created_at).toLocaleString()}</small>
+                    <div style="margin-top:8px">
+                        <button class="decrypt-btn">Decrypt</button>
+                        <span class="cipher-preview" style="margin-left:8px; font-size:0.9rem; color:var(--muted)">${msg.cipher_text.slice(0,8)}...${msg.cipher_text.slice(-8)}</span>
+                    </div>
+                    <div class="decrypted-text" style="margin-top:8px; display:none; background:rgba(0,0,0,0.03); padding:8px; border-radius:8px;"></div>`;
+                history.appendChild(card);
+
+                const btn = card.querySelector('.decrypt-btn');
+                const decryptedDiv = card.querySelector('.decrypted-text');
+                btn.addEventListener('click', async () => {
+                    if (decryptedDiv.style.display === 'block') {
+                        decryptedDiv.style.display = 'none';
+                        btn.textContent = 'Decrypt';
+                        return;
+                    }
+                    btn.disabled = true;
+                    btn.textContent = 'Decrypting...';
+                    try {
+                        const resp = await fetch('/api/decrypt_message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ cipher_text: msg.cipher_text })
+                        });
+                        const j = await resp.json();
+                        if (j.success) {
+                            decryptedDiv.textContent = j.plain_text;
+                            decryptedDiv.style.display = 'block';
+                            btn.textContent = 'Hide';
+                        } else {
+                            decryptedDiv.textContent = j.message || 'Decryption failed';
+                            decryptedDiv.style.display = 'block';
+                            btn.textContent = 'Decrypt';
+                        }
+                    } catch (err) {
+                        decryptedDiv.textContent = 'Error contacting server';
+                        decryptedDiv.style.display = 'block';
+                        btn.textContent = 'Decrypt';
+                    }
+                    btn.disabled = false;
+                });
+            });
+        }
+
+        document.getElementById('recipient').addEventListener('change', function () {
+            if (this.value) {
+                fetchHistory(this.value);
+            }
+        });
+
+        document.getElementById('message-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const recipient = document.getElementById('recipient').value;
+            const subject = document.getElementById('subject').value;
+            const priority = document.getElementById('priority').value;
+            const messageText = document.getElementById('message-text').value;
+            const feedback = document.getElementById('message-feedback');
+            const preview = document.getElementById('message-preview');
+            const response = await fetch('/api/send_message', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient, message: messageText, subject, priority })
+            });
+            const result = await response.json();
+            feedback.textContent = result.message;
+            preview.textContent = result.success ? `Encrypted preview: ${result.preview}` : '';
+            if (result.success) {
+                document.getElementById('message-text').value = '';
+                document.getElementById('subject').value = '';
+                document.getElementById('priority').value = 'normal';
+                fetchHistory(recipient);
+            }
+        });
+
+        loadRecipients();
+    </script>
+</body>
+</html>

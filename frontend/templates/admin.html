@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Secure Command Center</h2>
+            <nav>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/chat">Secure Chat</a>
+                <a href="/admin">Admin Panel</a>
+                <a href="/api/logout">Logout</a>
+            </nav>
+        </aside>
+        <section class="content">
+            <header>
+                <h1>Admin Network Monitoring</h1>
+                <p>Monitor traffic, alerts, login events and suspicious activity.</p>
+            </header>
+            <div class="admin-grid">
+                <article class="admin-card">
+                    <h3>Active Network Events</h3>
+                    <div id="event-log"></div>
+                </article>
+            </div>
+        </section>
+    </div>
+    <script>
+        async function loadEvents() {
+            const response = await fetch('/api/network_logs');
+            const data = await response.json();
+            const eventLog = document.getElementById('event-log');
+            eventLog.innerHTML = '';
+            data.logs.forEach(entry => {
+                const row = document.createElement('div');
+                row.className = 'event-row';
+                row.innerHTML = `<strong>${entry.action}</strong> ${entry.details || ''} <span>${new Date(entry.timestamp).toLocaleString()}</span>`;
+                eventLog.appendChild(row);
+            });
+        }
+        loadEvents();
+        setInterval(loadEvents, 20000);
+    </script>
+</body>
+</html>

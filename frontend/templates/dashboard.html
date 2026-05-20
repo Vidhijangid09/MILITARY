@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Military Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>Secure Command Center</h2>
+            <nav>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/chat">Secure Chat</a>
+                <a href="/admin">Admin Panel</a>
+                <a href="/api/logout">Logout</a>
+            </nav>
+        </aside>
+        <section class="content">
+            <header>
+                <h1>Threat Monitoring Dashboard</h1>
+                <p>Real-time intrusion detection and encrypted communication oversight.</p>
+            </header>
+            <div class="metric-grid">
+                <article class="metric-card">
+                    <h3>Active Users</h3>
+                    <p>{{ stats['active_users'] }}</p>
+                </article>
+                <article class="metric-card">
+                    <h3>Total Messages</h3>
+                    <p>{{ stats['total_messages'] }}</p>
+                </article>
+                <article class="metric-card">
+                    <h3>Threat Alerts</h3>
+                    <p>{{ stats['threat_alerts'] }}</p>
+                </article>
+                <article class="metric-card">
+                    <h3>Suspicious Logins</h3>
+                    <p>{{ stats['suspicious_logins'] }}</p>
+                </article>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <h3>Message Volume</h3>
+                    <canvas id="volumeChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Threat Score Timeline</h3>
+                    <canvas id="alertChart"></canvas>
+                </div>
+            </div>
+            <div class="alerts-card">
+                <h3>Recent Alerts</h3>
+                <div id="alert-cards" class="alert-cards"></div>
+            </div>
+        </section>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
